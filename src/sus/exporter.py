@@ -196,7 +196,7 @@ def export(path: str, score: Score):
                         taps.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Tap.ELASER) )
 
                     if step.ease == "in": # 加速
-                        directionals.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Air.UP) )
+                        directionals.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Air.DOWN) )
                     elif step.ease == "out": # 減速
                         directionals.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Air.RIGHT_DOWN) )
                     elif step.ease == "linear": # 直線
