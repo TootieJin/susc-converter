@@ -13,7 +13,7 @@ tick1_beat = 4 / 1920
 def _shift(note: Single | Slide | SlideStartPoint | SlideRelayPoint | SlideEndPoint | Guide | GuidePoint, beats: list[tuple]):
     if hasattr(note, "beat"):
         note_beat = round(note.beat, 10)
-        key = (note_beat, note.lane, note.size)
+        key = (note_beat, int(note.lane - note.size + 8))
         if key in beats:
             note.beat += tick1_beat  # 1920分ずらす
             _shift(note, beats)
