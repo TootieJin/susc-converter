@@ -150,7 +150,7 @@ def export(path: str, score: Score):
                             slide.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Slide.VISIBLE_STEP) )
                     elif step.type == "attach": # 無視中継点
                         taps.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Tap.FLICK))
-                        slide.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Slide.STEP) )
+                        slide.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Slide.VISIBLE_STEP) )
 
                 # 終点
                 elif step.type == "end":
