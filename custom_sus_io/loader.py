@@ -92,9 +92,18 @@ def process_score(lines: list[tuple[str]], metadata: list[tuple[str]]) -> Score:
         (bar_measure, ticks_per_measure, ticks) = bar
         
         return ticks + (measure - bar_measure) * ticks_per_measure + (i * ticks_per_measure) // total
+    
+    def fix_til_tick(measure: int, ticks_in_measure: int) -> int:
+        bar = next(bar for bar in bars if measure >= bar[0])
+        if not bar: raise ValueError(f'Measure {measure} is out of range.')
+        (bar_measure, ticks_per_measure, ticks) = bar
+
+        return ticks + (measure - bar_measure) * ticks_per_measure + ticks_in_measure
+    
 
     bpm_map = {}
     bpm_change_objects = []
+    tils = []   # ハイスピに対応
     tap_notes = []
     directional_notes = []
     slide_streams = defaultdict(list)
@@ -116,7 +125,19 @@ def process_score(lines: list[tuple[str]], metadata: list[tuple[str]]) -> Score:
         elif (len(header) == 6 and header[3] == '9'):
             channel = header[5]
             guide_streams[channel] += to_note_objects(header, data, to_tick)
-            
+        # ハイスピに対応(仮)
+        elif (len(header) == 5 and header.startswith('TIL')):
+            for til in data[1:-1].replace(" ", "").split(','):
+                til = re.search(r"(\d+)'(\d+):(\d+(\.?\d+)?)", til)
+                if til:
+                    measure, tick, value = int(til.group(1)), int(til.group(2)), float(til.group(3))
+                    tils.append(
+                        (
+                            fix_til_tick(measure, tick),
+                            value
+                        )
+                    )
+
 
     slide_notes = []
     for stream in slide_streams.values():
@@ -133,6 +154,7 @@ def process_score(lines: list[tuple[str]], metadata: list[tuple[str]]) -> Score:
         for tick, value in
         sorted(bpm_change_objects, key=lambda x: x[0])
     ]
+
     
     return Score(
         metadata=processed_metadata,
@@ -141,9 +163,10 @@ def process_score(lines: list[tuple[str]], metadata: list[tuple[str]]) -> Score:
         slides=slide_notes,
         guides=guide_notes,
         bpms=bpms,
+        tils=tils,
         bar_lengths=bar_lengths
     )
-    
+
 def to_slides(stream: list[Note]) -> list[list[Note]]:
     slides: list[list[Note]] = []  
     current: list[Note] = None

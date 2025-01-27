@@ -107,6 +107,7 @@ def dumps(
     directionals = sorted(score.directionals, key=lambda note: note.tick)
     slides = sorted(score.slides, key=lambda x: x[0].tick)
     guides = sorted(score.guides, key=lambda x: x[0].tick)
+    tils = sorted(score.tils, key=lambda x: x[0])
 
     for measure, value in bar_lengths:
         lines.append(f'#{measure:03}02:{" " if space else ""}{format_number(value)}')
@@ -143,6 +144,15 @@ def dumps(
             bpm_identifiers[value] = identifier
             lines.append(f'#BPM{bpm_identifiers[value]}:{" " if space else ""}{format_number(value)}')
         push_raw(tick, '08', bpm_identifiers[value])
+    lines.append('')
+
+    # ハイスピ(dumper側は変拍子対応が不要のため未対応)
+    til_list = []
+    for tick, value in tils:
+        til_list.append(f"{tick//(ticks_per_beat*4)}'{tick%(ticks_per_beat*4)}:{value}")
+    lines.append('#TIL00: "' + f"{', '.join(til_list)}" + '"')
+    lines.append('#HISPEED 00')
+    lines.append('#MEASUREHS 00')
     lines.append('')
 
     for note in taps:
