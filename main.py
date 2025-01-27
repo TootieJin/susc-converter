@@ -1,20 +1,22 @@
 import os
 import sys
-from src import sus
-from src import usc
+from susc import sus, usc
 from tkinter import filedialog
 
 
-path = filedialog.askopenfilename(filetypes=[("譜面ファイル", "*.usc")])
+path = filedialog.askopenfilename(filetypes=[("譜面ファイル", "*.usc"), ("譜面ファイル", "*.sus")])
+
 if path == "":
     sys.exit()
-    
+
 dir = os.path.dirname(path)
-file_name = os.path.basename(path).replace(".usc", "")
+filename = os.path.basename(path).split(".")[0]
 
-with open(path) as f:
-    score = usc.load(f)
-
-score.shift()
-
-sus.export(f"{dir}/{file_name}.sus", score)
+if path.endswith(".usc"):
+    with open(path) as f:
+        score = usc.load(f)
+    score.shift()
+    sus.export(f"{dir}/{filename}.sus", score)
+elif path.endswith(".sus"):
+    with open(path) as f:
+        score = sus.load(f)
