@@ -20,3 +20,4 @@ if path.endswith(".usc"):
 elif path.endswith(".sus"):
     with open(path) as f:
         score = sus.load(f)
+    usc.export(f"{dir}/{filename}.usc", score)

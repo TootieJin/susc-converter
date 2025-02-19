@@ -81,14 +81,6 @@ def _search_directional_type(air_note: int | None) -> Literal["left", "up", "rig
             return "right"
         case _:
             return None
-        
-# 指定tickのハイスピを調べる
-def _search_time_scale_group(tick: int, tils: list[tuple[int, int]]) -> int | float:
-    speed = 1.0
-    for t, v in sorted(tils, key=lambda x:x[0]):
-        if t <= tick:
-            speed = v
-    return speed
 
 
 def load(fp: TextIO) -> Score:
@@ -140,7 +132,6 @@ def load(fp: TextIO) -> Score:
             beat = _tick_to_beat(point.tick)
             lane = _sus_lanes_to_usc_lanes(point.lane, point.width)
             size = _sus_notesize_to_usc_notesize(point.width)
-            time_scale = _search_time_scale_group(point.tick, sus_score.tils)
 
             if idx == 0:  # 始点
                 slide_note.critical = critical
@@ -152,7 +143,7 @@ def load(fp: TextIO) -> Score:
                         judgeType = judge_type,
                         lane = lane,
                         size = size,
-                        timeScaleGroup = time_scale
+                        timeScaleGroup = 0
                     )
                 )
             elif idx == point_length-1:  # 終点
@@ -163,7 +154,7 @@ def load(fp: TextIO) -> Score:
                         judgeType = judge_type,
                         lane = lane,
                         size = size,
-                        timeScaleGroup = time_scale,
+                        timeScaleGroup = 0,
                         direction = direction
                     )
                 )
@@ -173,7 +164,7 @@ def load(fp: TextIO) -> Score:
                                 ease = ease,
                                 lane = lane,
                                 size = size,
-                                timeScaleGroup = time_scale,
+                                timeScaleGroup = 0,
                                 type = "tick",
                                 critical = slide_note.critical
                             )
@@ -203,7 +194,6 @@ def load(fp: TextIO) -> Score:
             beat = _tick_to_beat(point.tick)
             lane = _sus_lanes_to_usc_lanes(point.lane, point.width)
             size = _sus_notesize_to_usc_notesize(point.width)
-            time_scale = _search_time_scale_group(point.tick, sus_score.tils)
 
             if idx == 0:  # 始点
                 if critical:
@@ -214,7 +204,7 @@ def load(fp: TextIO) -> Score:
                     ease = ease,
                     lane = lane,
                     size = size,
-                    timeScaleGroup = time_scale
+                    timeScaleGroup = 0
                 )
             )
         notes.append(guide_note)
@@ -227,7 +217,6 @@ def load(fp: TextIO) -> Score:
         critical = _search_is_critical(note.type)
         lane = _sus_lanes_to_usc_lanes(note.lane, note.width)
         size = _sus_notesize_to_usc_notesize(note.width)
-        time_scale = _search_time_scale_group(note.tick, sus_score.tils)
         trace = _search_is_trace(note.type)
         direction = _search_directional_type(samepos_direction)
 
@@ -237,7 +226,7 @@ def load(fp: TextIO) -> Score:
                 critical = critical,
                 lane = lane,
                 size = size,
-                timeScaleGroup = time_scale,
+                timeScaleGroup = 0,
                 trace = trace,
                 direction = direction
             )
@@ -245,7 +234,6 @@ def load(fp: TextIO) -> Score:
 
     
     notes.sort(key=lambda x: x.get_sort_number())
-    print(notes)
     
     metadata = MetaData(
         title = sus_score.metadata.title,
