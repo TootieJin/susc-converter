@@ -150,7 +150,7 @@ def export(path: str, score: Score):
             guide = []
             note.midpoints.sort(key= lambda x: x.beat)
             point_length = len(note.midpoints)
-            for idx, step in zip(range(point_length), note.midpoints):
+            for idx, step in enumerate(note.midpoints):
                 step = cast(GuidePoint, step)
                 tick = beat_to_tick(step.beat)
                 lane = usc_lanes_to_sus_lanes(step.lane, step.size)
@@ -177,6 +177,10 @@ def export(path: str, score: Score):
                     elif note.color == "green":
                         pass
                     guide.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Guide.END) )
+                    
+                    # フェードなしガイド
+                    if note.fade == "none":
+                        guide.insert(-1, csus.Note(tick=tick-1, lane=lane, width=width, type=SusNoteType.Guide.STEP) )
 
                 # 中継点
                 else:

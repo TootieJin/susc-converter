@@ -14,7 +14,7 @@ class GuidePoint:
 @dataclass
 class Guide:
     color: Literal["green", "yellow"]
-    fade: Literal["in", "out"]
+    fade: Literal["in", "out", "none"]
     midpoints: list = field(default_factory=list)
     type: str = "guide"
 
