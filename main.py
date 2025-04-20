@@ -15,6 +15,7 @@ filename = os.path.basename(path).split(".")[0]
 if path.endswith(".usc"):
     with open(path) as f:
         score = usc.load(f)
+    score.add_point_without_fade()
     score.shift()
     sus.export(f"{dir}/{filename}.sus", score)
 elif path.endswith(".sus"):
