@@ -45,6 +45,7 @@ class Slide:
 
     def append(self, slidepoint: SlideStartPoint | SlideRelayPoint | SlideEndPoint):
         self.connections.append(slidepoint)
+        self.connections.sort(key= lambda x: x.beat)
 
     def get_sort_number(self) -> int:
         return 4

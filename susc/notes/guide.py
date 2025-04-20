@@ -20,6 +20,7 @@ class Guide:
 
     def append(self, guidepoint: GuidePoint):
         self.midpoints.append(guidepoint)
+        self.midpoints.sort(key= lambda x: x.beat)
 
     def get_sort_number(self) -> int:
         return 5
