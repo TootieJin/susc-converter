@@ -12,13 +12,48 @@ if path == "":
 dir = os.path.dirname(path)
 filename = os.path.basename(path).split(".")[0]
 
-if path.endswith(".usc"):
-    with open(path) as f:
-        score = usc.load(f)
-    score.add_point_without_fade()
-    score.shift()
-    sus.export(f"{dir}/{filename}.sus", score)
-elif path.endswith(".sus"):
-    with open(path) as f:
-        score = sus.load(f)
-    usc.export(f"{dir}/{filename}.usc", score)
+try:
+    if path.endswith(".usc"):
+
+        print("uscをsusに変換します。\n")
+        with open(path) as f:
+            print("uscデータを変換しています...", end="")
+            score = usc.load(f)
+            print(" \033[32mOK\033[0m")
+            
+        print("フェード無し用のガイド中継点を追加しています...", end="")
+        score.add_point_without_fade()
+        print(" \033[32mOK\033[0m")
+        
+        print("重なっているノーツを修正しています...", end="")
+        score.shift()
+        print(" \033[32mOK\033[0m")
+        
+        print("susファイルを出力しています...", end="")
+        sus.export(f"{dir}/{filename}.sus", score)
+        print(" \033[32mOK\033[0m")
+        
+        print("\n変換が終了しました。")
+        print("保存先：", f"{dir}/{filename}.sus")
+        
+    elif path.endswith(".sus"):
+        
+        print("susをuscに変換します。\n")
+        with open(path) as f:
+            print("susデータを変換しています...", end="")
+            score = sus.load(f)
+            print(" \033[32mOK\033[0m")
+        
+        print("uscファイルを出力しています...", end="")
+        usc.export(f"{dir}/{filename}.usc", score)
+        print(" \033[32mOK\033[0m")
+    
+        print("\n変換が終了しました。")
+        print("保存先：", f"{dir}/{filename}.usc")
+    
+except Exception as e:
+    print("\nエラーが発生しました。")
+    print("エラー内容：", e)
+    
+finally:
+    input("\nEnterキーでウィンドウを閉じます...")
