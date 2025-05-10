@@ -175,10 +175,6 @@ def export(path: str, score: Score):
                     elif note.color == "green":
                         pass
                     guide.append( csus.Note(tick=tick, lane=lane, width=width, type=SusNoteType.Guide.END) )
-                    
-                    # フェードなしガイド
-                    if note.fade == "none":
-                        guide.insert(-1, csus.Note(tick=tick-1, lane=lane, width=width, type=SusNoteType.Guide.STEP) )
 
                 # 中継点
                 else:
