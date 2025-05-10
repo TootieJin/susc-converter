@@ -12,7 +12,7 @@ from .notetype import SusNoteType
 
 # tickをbeatに変換する
 def _tick_to_beat(tick: int) -> float:
-    return float(tick / 480)
+    return round(float(tick / 480), 6)
 
 # susのレーン記法からuscのレーン記法に変換する
 def _sus_lanes_to_usc_lanes(lane: int, width: int) -> float:

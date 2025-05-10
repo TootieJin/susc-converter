@@ -25,14 +25,14 @@ def load(fp: TextIO) -> Score:
 
         if type == "bpm":
             notelist.append(
-                Bpm(beat=obj["beat"], bpm=obj["bpm"])
+                Bpm(beat=round(obj["beat"], 6), bpm=obj["bpm"])
             )
 
         elif type == "timeScaleGroup":
             group = TimeScaleGroup()
             for timescale in obj["changes"]:
                 group.append(
-                    TimeScalePoint(beat=timescale["beat"], timeScale=timescale["timeScale"])
+                    TimeScalePoint(beat=round(timescale["beat"], 6), timeScale=timescale["timeScale"])
                 )
             notelist.append(group)
 
@@ -40,7 +40,7 @@ def load(fp: TextIO) -> Score:
             if "direction" in obj:
                 notelist.append(
                     Single(
-                        beat=obj["beat"], 
+                        beat=round(obj["beat"], 6), 
                         critical=obj["critical"],
                         lane=obj["lane"],
                         size=obj["size"],
@@ -52,7 +52,7 @@ def load(fp: TextIO) -> Score:
             else:
                 notelist.append(
                     Single(
-                        beat=obj["beat"], 
+                        beat=round(obj["beat"], 6), 
                         critical=obj["critical"],
                         lane=obj["lane"],
                         size=obj["size"],
@@ -67,7 +67,7 @@ def load(fp: TextIO) -> Score:
                 if point["type"] == "start":
                     slide.append(
                         SlideStartPoint(
-                            beat=point["beat"], 
+                            beat=round(point["beat"], 6), 
                             critical=point["critical"],
                             ease=point["ease"],
                             judgeType=point["judgeType"],
@@ -80,7 +80,7 @@ def load(fp: TextIO) -> Score:
                     if "critical" in point:
                         slide.append(
                             SlideRelayPoint(
-                                beat=point["beat"], 
+                                beat=round(point["beat"], 6), 
                                 ease=point["ease"],
                                 lane=point["lane"],
                                 size=point["size"],
@@ -92,7 +92,7 @@ def load(fp: TextIO) -> Score:
                     else:
                         slide.append(
                             SlideRelayPoint(
-                                beat=point["beat"], 
+                                beat=round(point["beat"], 6), 
                                 ease=point["ease"],
                                 lane=point["lane"],
                                 size=point["size"],
@@ -104,7 +104,7 @@ def load(fp: TextIO) -> Score:
                     if "direction" in point:
                         slide.append(
                             SlideEndPoint(
-                                beat=point["beat"],
+                                beat=round(point["beat"], 6),
                                 critical=point["critical"],
                                 judgeType=point["judgeType"],
                                 lane=point["lane"],
@@ -116,7 +116,7 @@ def load(fp: TextIO) -> Score:
                     else:
                         slide.append(
                             SlideEndPoint(
-                                beat=point["beat"],
+                                beat=round(point["beat"], 6),
                                 critical=point["critical"],
                                 judgeType=point["judgeType"],
                                 lane=point["lane"],
@@ -131,7 +131,7 @@ def load(fp: TextIO) -> Score:
             for point in obj["midpoints"]:
                 guide.append(
                     GuidePoint(
-                        beat=point["beat"],
+                        beat=round(point["beat"], 6),
                         ease=point["ease"],
                         lane=point["lane"],
                         size=point["size"],
