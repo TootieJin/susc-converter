@@ -162,6 +162,9 @@ def _shift_slide(
                     else:
                         point.beat -= BEAT_PER_TICK
                         
+                case SlideEndPoint(), _:
+                    point.beat -= BEAT_PER_TICK
+                    
                 case _, _:
                     point.beat += BEAT_PER_TICK
                     
@@ -175,6 +178,8 @@ def _shift_guide(
     for point in note.midpoints:
         while _get_overlap_note(point, tmp_notes) != None:
             point.beat += BEAT_PER_TICK
+    
+    note.midpoints.sort(key=lambda x:x.beat)
 
 
 def _shift_single(
