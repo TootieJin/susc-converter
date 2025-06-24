@@ -128,7 +128,7 @@ def process_score(lines: list[tuple[str]], metadata: list[tuple[str]]) -> Score:
         # ハイスピに対応(仮)
         elif (len(header) == 5 and header.startswith('TIL')):
             for til in data[1:-1].replace(" ", "").split(','):
-                til = re.search(r"(\d+)'(\d+):(\d+(\.?\d+)?)", til)
+                til = re.search(r"(\d+)'(\d+):(.?\d+(\.?\d+)?)", til)
                 if til:
                     measure, tick, value = int(til.group(1)), int(til.group(2)), float(til.group(3))
                     tils.append(
