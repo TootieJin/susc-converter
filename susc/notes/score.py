@@ -43,13 +43,13 @@ def _convert_tmp_notes(tmp_notes: list[Single | Slide | Guide]) -> list[Single |
 # ノーツの一部または全てが重なっているか調べる
 def _get_overlap_note(
     target_note: Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint,
-    tmp_notes: list[Single | Slide | Guide]
+    tmp_notes: list[Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint]
 ) -> Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint | None:
     
     t_note_range = set( _calc_note_range(target_note.lane, target_note.size) )
     t_note_beat = target_note.beat
     
-    for note in _convert_tmp_notes(tmp_notes):
+    for note in tmp_notes:
         # 同じインスタンス（ノーツ）の場合は飛ばす
         if target_note is note:
             continue
@@ -228,11 +228,19 @@ class Score:
     def shift(self):
         tmp_notes = []
         
+        # 処理済みノーツのみを追加していき、重なり判定をした場合抜けが出るので
+        # 一旦全ノーツに対して重なり判定をするように変更します
+        # （処理時間はお察しですが....）
         for note in self.notes:
             if isinstance(note, Bpm) or isinstance(note, TimeScaleGroup):
                 continue
-            
             tmp_notes.append(note)
+            
+        tmp_notes = _convert_tmp_notes(tmp_notes)
+        
+        for note in self.notes:
+            if isinstance(note, Bpm) or isinstance(note, TimeScaleGroup):
+                continue
             
             if isinstance(note, Single):
                 _shift_single(note, tmp_notes)
