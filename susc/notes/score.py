@@ -10,6 +10,9 @@ from .guide import Guide, GuidePoint
 # 1tickをbeatに変換
 BEAT_PER_TICK = round(4 / 1920, 6)
 
+# ノーツリストを何小節区切りにするか
+# ※ノーツリスト = 重なりを調べるときに使用するリスト
+BAR_INTERVAL = 0.5
 
 # uscのレーン表記(中央が0.0)
 # ↓
@@ -23,6 +26,22 @@ def _calc_note_range(lane: float, size: float) -> list[int]:
     note_leftpos = int(lane - size + LANE_OFFSET)
     note_size = int(size * 2)
     return [ _ for _ in range(note_leftpos, note_leftpos + note_size) ]
+
+
+# ノーツを入れるリストの番号をbeatの値から計算する
+def _calc_notelist_index(note: Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint) -> int:
+    return int(note.beat // BAR_INTERVAL)
+
+
+# BAR_INTERVALごとに区切ってノーツを入れたリストから、指定beatのリストと前後のリストにあるノーツを返す
+def _get_target_notelist(
+    split_tmp_notes: list[ list[Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint] ],
+    target_note: Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint
+) -> list[Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint]:
+    index = _calc_notelist_index(target_note)
+    start = max(0, index - 1)
+    end = min(len(split_tmp_notes), index + 2)
+    return sum(split_tmp_notes[start:end], [])
 
 
 # スライド、ガイドのpointを入れたリストを返す
@@ -43,13 +62,13 @@ def _convert_tmp_notes(tmp_notes: list[Single | Slide | Guide]) -> list[Single |
 # ノーツの一部または全てが重なっているか調べる
 def _get_overlap_note(
     target_note: Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint,
-    tmp_notes: list[Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint]
+    split_tmp_notes: list[ list[Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint] ]
 ) -> Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint | None:
     
     t_note_range = set( _calc_note_range(target_note.lane, target_note.size) )
     t_note_beat = target_note.beat
     
-    for note in tmp_notes:
+    for note in _get_target_notelist(split_tmp_notes, target_note):
         # 同じインスタンス（ノーツ）の場合は飛ばす
         if target_note is note:
             continue
@@ -67,7 +86,7 @@ def _get_overlap_note(
 # スライドが脱法（終点より後に中継点があるetc...）していないか調べ、修正する
 def _check_slide(
     note: Slide,
-    tmp_notes: list[Single | Slide | Guide]
+    split_tmp_notes: list[ list[Single | SlideStartPoint | SlideRelayPoint | SlideEndPoint | GuidePoint] ]
 ):
     for point in note.connections:
         if isinstance(point, SlideStartPoint):
@@ -80,13 +99,13 @@ def _check_slide(
         if not isinstance(point, SlideEndPoint):
             while point.beat >= end_point.beat:
                 point.beat -= BEAT_PER_TICK
-                while _get_overlap_note(point, tmp_notes) != None:
+                while _get_overlap_note(point, split_tmp_notes) != None:
                     point.beat -= BEAT_PER_TICK
                     
         if not isinstance(point, SlideStartPoint):
             while point.beat <= start_point.beat:
                 point.beat += BEAT_PER_TICK
-                while _get_overlap_note(point, tmp_notes) != None:
+                while _get_overlap_note(point, split_tmp_notes) != None:
                     point.beat += BEAT_PER_TICK
                 
         if point.beat > end_point.beat:
@@ -97,10 +116,10 @@ def _check_slide(
 
 def _shift_slide(
     note: Slide,
-    tmp_notes: list[Single | Slide | Guide]
+    split_tmp_notes: list[Single | Slide | Guide]
 ):
     for point in note.connections:
-        while (overlap_note := _get_overlap_note(point, tmp_notes)) != None:
+        while (overlap_note := _get_overlap_note(point, split_tmp_notes)) != None:
             match point, overlap_note:
                 
                 # スライド始点 + single
@@ -168,15 +187,15 @@ def _shift_slide(
                 case _, _:
                     point.beat += BEAT_PER_TICK
                     
-    _check_slide(note, tmp_notes)
+    _check_slide(note, split_tmp_notes)
 
 
 def _shift_guide(
     note: Guide,
-    tmp_notes: list[Single | Slide | Guide]
+    split_tmp_notes: list[Single | Slide | Guide]
 ):
     for point in note.midpoints:
-        while _get_overlap_note(point, tmp_notes) != None:
+        while _get_overlap_note(point, split_tmp_notes) != None:
             point.beat += BEAT_PER_TICK
     
     note.midpoints.sort(key=lambda x:x.beat)
@@ -184,9 +203,9 @@ def _shift_guide(
 
 def _shift_single(
     note: Single,
-    tmp_notes: list[Single | Slide | Guide]
+    split_tmp_notes: list[Single | Slide | Guide]
 ):
-    while (overlap_note := _get_overlap_note(note, tmp_notes)) != None:
+    while (overlap_note := _get_overlap_note(note, split_tmp_notes)) != None:
         match note, overlap_note:
             case _, Single(trace=True):
                 overlap_note.beat += BEAT_PER_TICK
@@ -227,24 +246,32 @@ class Score:
     # 重なっているノーツをずらす
     def shift(self):
         tmp_notes = []
-        
-        # 処理済みノーツのみを追加していき、重なり判定をした場合抜けが出るので
-        # 一旦全ノーツに対して重なり判定をするように変更します
-        # （処理時間はお察しですが....）
+
+        # 一旦、中継点灯を含めた全部のノーツを入れたリストを作る（BPM, ソフランは除外）
         for note in self.notes:
             if isinstance(note, Bpm) or isinstance(note, TimeScaleGroup):
                 continue
             tmp_notes.append(note)
-            
         tmp_notes = _convert_tmp_notes(tmp_notes)
+
+        # BAR_INTERVALの小節長で分割したリストを作成するために、リストをいくつ作るか計算する
+        max_beat = max(tmp_notes, key=lambda x: x.beat).beat
+
+        # BAR_INTERVALの小節長で分割したリストを作成する
+        print(max_beat // BAR_INTERVAL)
+        split_tmp_notes = [ list() for _ in range(int(max_beat // BAR_INTERVAL + 1)) ]
+
+        # note.beatの値に対応するリストにノーツを入れる
+        for note in tmp_notes:
+            split_tmp_notes[_calc_notelist_index(note)].append(note)
         
         for note in self.notes:
             if isinstance(note, Bpm) or isinstance(note, TimeScaleGroup):
                 continue
             
             if isinstance(note, Single):
-                _shift_single(note, tmp_notes)
+                _shift_single(note, split_tmp_notes)
             elif isinstance(note, Slide):
-                _shift_slide(note, tmp_notes)
+                _shift_slide(note, split_tmp_notes)
             elif isinstance(note, Guide):
-                _shift_guide(note, tmp_notes)
+                _shift_guide(note, split_tmp_notes)
